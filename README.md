@@ -7,7 +7,7 @@ This is a very simple example repository for getting started with a browser impl
 After downloading this repository, you will need to install the necessary dependencies and run the environment setup with the following commands:
 
 ```
-npm i
+yarn install
 ```
 ```
 yarn run dev
