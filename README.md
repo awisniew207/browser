@@ -14,3 +14,13 @@ yarn run dev
 ```
 
 Afterward, your terminal should inform you that the application is being displayed at `http://localhost:5173/`. Clicking the `Connect` button will send a log to your browser, informing you of the connection to the Lit Network.
+
+# Other Frameworks
+
+If you would like to use frameworks other than React, a repository similar to this one can be setup using the steps below:
+1. `yarn create vite@latest`
+2. Choose project name, framework, and configuration of choice.
+3. `yarn add @lit-protocol/lit-node-client`
+4. Be sure to use Polyfills since this is a browser implementation. Make your `vite.config` file similar to the one in this repository.
+
+
