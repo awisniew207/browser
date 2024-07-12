@@ -12,8 +12,12 @@
   "dependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
+    "@lit-protocol/lit-auth-client": "^6.1.1",
     "@lit-protocol/lit-node-client": "^6.1.0",
+    "@lit-protocol/pkp-ethers": "^6.1.1",
+    "@simplewebauthn/browser": "^10.0.0",
     "@vitejs/plugin-react-swc": "^3.7.0",
+    "abstractionkit": "0.1.12",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
