@@ -8,18 +8,16 @@ import { AuthCallbackParams, AuthMethod } from "@lit-protocol/types"
 import { ethers } from 'ethers';
 import { 
   SafeAccountV0_2_0 as SafeAccount, 
-  SocialRecoveryModule
+  SocialRecoveryModule,
+  CandidePaymaster,
 } from "abstractionkit";
 
+const ownerPublicAddress = import.meta.env.VITE_OWNER_PUBLIC_ADDRESS;
+const newOwnerPublicAddress = import.meta.env.VITE_NEW_OWNER_PUBLIC_ADDRESS;
+const jsonRpcNodeProvider = import.meta.env.VITE_JSON_RPC_NODE_PROVIDER;
+const bundlerUrl = import.meta.env.VITE_BUNDLER_URL;
 
-const LIT_API_KEY = "api";
-const REDIRECT_URI = "https//localhost:5173/";
-const JSON_RPC_NODE_PROVIDER = "https://rpc2.sepolia.org";
-const BUNDLER_URL = "https://sepolia.voltaire.candidewallet.com/rpc";
-const OWNER_PUBLIC_ADDRESS = "please add"
-const NEW_OWNER_PUBLIC_ADDRESS = "please add"
-
-export const work = async() =>{
+export const addGuardian = async () => {
   const initalizeClientsAndProvider = async() =>{
     // Connect to the Lit Network through the LitNodeClient
     const litNodeClient = new LitNodeClient({
@@ -31,7 +29,7 @@ export const work = async() =>{
     // Use LitAuthClient to handle authentication through the Lit login
     const litAuthClient = new LitAuthClient({
       litRelayConfig: {
-        relayApiKey: LIT_API_KEY,
+        relayApiKey: import.meta.env.VITE_LIT_API_KEY,
       },
       litNodeClient,
     });
@@ -44,7 +42,7 @@ export const work = async() =>{
     const provider = litAuthClient.initProvider<GoogleProvider>(
       ProviderType.Google,
       {
-        //redirectUri: REDIRECT_URI, temporarily commented out for dev
+        //redirectUri: VITE_REDIRECT_URI, temporarily commented out for dev
       }
     );
 
@@ -126,43 +124,117 @@ export const work = async() =>{
     throw new Error("Guardian Signer is undefined.");
   }
 
-  const smartAccount = SafeAccount.initializeNewAccount([OWNER_PUBLIC_ADDRESS]);
-      
+  const smartAccount = SafeAccount.initializeNewAccount([ownerPublicAddress], {c2Nonce: 3n});
+  console.log("Smart Account Address: ", smartAccount.accountAddress);
+  
+  // Add Lit Guardian
   const srm = new SocialRecoveryModule();
+
+  console.log(await srm.getGuardians(jsonRpcNodeProvider ,smartAccount.accountAddress))
   const enableModuleTx = srm.createEnableModuleMetaTransaction(
       smartAccount.accountAddress
   );
+
   const addGuardianTx = srm.createAddGuardianWithThresholdMetaTransaction(
       smartAccount.accountAddress, 
-      guardianSigner.address, // Lit Guardian Address
+      import.meta.env.VITE_GPK, // Lit Guardian Address
       1n //threshold
   );
-  
+
+  // Prepare userOperation
   let userOperation = await smartAccount.createUserOperation(
-      [enableModuleTx, addGuardianTx],
-      process.env.JSON_RPC_NODE_PROVIDER,
-      process.env.BUNDLER_URL,
+    [enableModuleTx, addGuardianTx],
+    jsonRpcNodeProvider,
+    bundlerUrl,
   );
 
+  // Add gas sponsorship info using paymaster
+  const paymasterUrl = import.meta.env.VITE_PAYMASTER_URL
+	const paymaster: CandidePaymaster = new CandidePaymaster(paymasterUrl);
+	userOperation = await paymaster.createSponsorPaymasterUserOperation(
+		userOperation,
+		bundlerUrl,
+	);
+
+  // Sign userOperation
+  userOperation.signature = smartAccount.signUserOperation(
+    userOperation,
+    [import.meta.env.VITE_OWNER_PRIVATE_KEY],
+    import.meta.env.VITE_CHAIN_ID
+  );
+
+  // Submit userOperation
+  const sendUserOperationResponse = await smartAccount.sendUserOperation(
+    userOperation,
+    bundlerUrl,
+  );
+
+  // Monitor and wait for receipt
+  console.log("Useroperation sent. Waiting to be included ......");
+  const userOperationReceiptResult = await sendUserOperationResponse.included();
+  console.log(userOperationReceiptResult);
+
+  // check for success or error
+	if (userOperationReceiptResult.success) {
+		console.log(
+			"Successful Useroperation. The transaction hash is : " +
+				userOperationReceiptResult.receipt.transactionHash,
+		);
+		const isGuardian = await srm.isGuardian(
+			jsonRpcNodeProvider,
+			smartAccount.accountAddress,
+			import.meta.env.VITE_GPK,
+		);
+		if (isGuardian) {
+			console.log(
+				"Guardian added confirmed. Guardian address is : " +
+        import.meta.env.VITE_GPK,
+			);
+		} else {
+			console.log("Adding guardian failed.");
+		}
+	} else {
+		console.log("Useroperation execution failed");
+	}
+};
+
+
+export const recoverAccount = async () => {
+  const smartAccount = SafeAccount.createAccountAddressAndInitCode([ownerPublicAddress], {c2Nonce: 3n});
+  const smartAccountAddress = smartAccount[0];
+  
+  // Prepare Recovery tx
+  const srm = new SocialRecoveryModule();
   const initiateRecoveryMetaTx = srm.createConfirmRecoveryMetaTransaction(
-      smartAccount.accountAddress, 
-      [NEW_OWNER_PUBLIC_ADDRESS],
+      smartAccountAddress,
+      [newOwnerPublicAddress],
       1, // new threshold
       true, // whether to auto-start execution of recovery
   );
 
-  // make sure to fund the guardian address on lit
-  const sendTx1 = await guardianSigner.sendTransaction({
-      to: initiateRecoveryMetaTx.to,
-      data: initiateRecoveryMetaTx.data,
-      value: 0,
-  });
+  // Send Transaction using guardian signer
+  // const confirmRecoveryTx = await guardianSigner.sendTransaction({
+  //     to: initiateRecoveryMetaTx.to,
+  //     data: initiateRecoveryMetaTx.data,
+  //     value: 0,
+  // });
 
-  const finalizeRecoveryMetaTx = srm.createFinalizeRecoveryMetaTransaction(smartAccount.accountAddress)
+  // console.log(confirmRecoveryTx, "confirmRecoveryTx")
+}
+
+// Can only finilize after grace period is over
+export const finilizeRecovery = async () => {
+  const smartAccount = SafeAccount.createAccountAddressAndInitCode([ownerPublicAddress], {c2Nonce: 3n});
+  const smartAccountAddress = smartAccount[0];
+
+  const srm = new SocialRecoveryModule();
+  const finalizeRecoveryMetaTx = srm.createFinalizeRecoveryMetaTransaction(smartAccountAddress);
 
   // Anyone can call the finilize function after the grace period is over
-  const sendTx2 = await guardianSigner.sendTransaction({
-  to: finalizeRecoveryMetaTx.to,
-  data: finalizeRecoveryMetaTx.data,
-  })
-}
+  // const finilizeRecoveryTx = await guardianSigner.sendTransaction({
+  //   to: finalizeRecoveryMetaTx.to,
+  //   data: finalizeRecoveryMetaTx.data,
+  // });
+
+  // console.log(finilizeRecoveryTx, "finilizeRecoveryTx");
+} 
