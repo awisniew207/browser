@@ -1,11 +1,9 @@
 import { LitNodeClient } from "@lit-protocol/lit-node-client";
 import { GoogleProvider, LitAuthClient } from "@lit-protocol/lit-auth-client";
 import { ProviderType, AuthMethodScope } from "@lit-protocol/constants";
-import { LitContracts } from "@lit-protocol/contracts-sdk";
 import { PKPEthersWallet } from "@lit-protocol/pkp-ethers";
 import { LitAbility, LitActionResource } from "@lit-protocol/auth-helpers"
 import { AuthCallbackParams, AuthMethod } from "@lit-protocol/types"
-import { ethers } from 'ethers';
 import { 
   SafeAccountV0_2_0 as SafeAccount, 
   SocialRecoveryModule,
@@ -124,20 +122,19 @@ export const addGuardian = async () => {
     throw new Error("Guardian Signer is undefined.");
   }
 
-  const smartAccount = SafeAccount.initializeNewAccount([ownerPublicAddress], {c2Nonce: 3n});
+  const smartAccount = SafeAccount.initializeNewAccount([ownerPublicAddress]);
   console.log("Smart Account Address: ", smartAccount.accountAddress);
   
   // Add Lit Guardian
   const srm = new SocialRecoveryModule();
 
-  console.log(await srm.getGuardians(jsonRpcNodeProvider ,smartAccount.accountAddress))
   const enableModuleTx = srm.createEnableModuleMetaTransaction(
       smartAccount.accountAddress
   );
 
   const addGuardianTx = srm.createAddGuardianWithThresholdMetaTransaction(
       smartAccount.accountAddress, 
-      import.meta.env.VITE_GPK, // Lit Guardian Address
+      guardianSigner.address, // Lit Guardian Address
       1n //threshold
   );
 
@@ -183,12 +180,12 @@ export const addGuardian = async () => {
 		const isGuardian = await srm.isGuardian(
 			jsonRpcNodeProvider,
 			smartAccount.accountAddress,
-			import.meta.env.VITE_GPK,
+			guardianSigner.address,
 		);
 		if (isGuardian) {
 			console.log(
 				"Guardian added confirmed. Guardian address is : " +
-        import.meta.env.VITE_GPK,
+        guardianSigner.address,
 			);
 		} else {
 			console.log("Adding guardian failed.");
@@ -200,7 +197,7 @@ export const addGuardian = async () => {
 
 
 export const recoverAccount = async () => {
-  const smartAccount = SafeAccount.createAccountAddressAndInitCode([ownerPublicAddress], {c2Nonce: 3n});
+  const smartAccount = SafeAccount.createAccountAddressAndInitCode([ownerPublicAddress]);
   const smartAccountAddress = smartAccount[0];
   
   // Prepare Recovery tx
@@ -224,7 +221,7 @@ export const recoverAccount = async () => {
 
 // Can only finilize after grace period is over
 export const finilizeRecovery = async () => {
-  const smartAccount = SafeAccount.createAccountAddressAndInitCode([ownerPublicAddress], {c2Nonce: 3n});
+  const smartAccount = SafeAccount.createAccountAddressAndInitCode([ownerPublicAddress]);
   const smartAccountAddress = smartAccount[0];
 
   const srm = new SocialRecoveryModule();
