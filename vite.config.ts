@@ -3,11 +3,14 @@ import react from '@vitejs/plugin-react';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
 import rollupNodePolyFill from 'rollup-plugin-polyfill-node';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
   plugins: [
     react(),
-    rollupNodePolyFill(),
+    nodePolyfills({
+      include: ['buffer', 'process', 'util']
+    }),
   ],
   define: {
     'process.env': {},
@@ -15,7 +18,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      buffer: 'rollup-plugin-polyfill-node/polyfills/buffer-es6',
+      // Remove the buffer alias
     },
   },
   optimizeDeps: {
@@ -26,6 +29,7 @@ export default defineConfig({
       plugins: [
         NodeGlobalsPolyfillPlugin({
           buffer: true,
+          process: true
         }),
         NodeModulesPolyfillPlugin(),
       ],
