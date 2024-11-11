@@ -38,7 +38,7 @@ export const connectToLit = async () => {
           resourceAbilityRequests,
         }) => {
           const toSign = await createSiweMessage({
-            domain: "https://testing-b6rpw8uz3-awisniew207s-projects.vercel.app/",
+            domain: "https://testing-kappa-gray-46.vercel.app/",
             uri,
             expiration,
             resources: resourceAbilityRequests,
