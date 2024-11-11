@@ -33,12 +33,11 @@ export const connectToLit = async () => {
           },
         ],
         authNeededCallback: async ({
-          uri,
           expiration,
           resourceAbilityRequests,
         }) => {
           const toSign = await createSiweMessage({
-            uri,
+            uri: "http://testing-b6rpw8uz3-awisniew207s-projects.vercel.app/",
             expiration,
             resources: resourceAbilityRequests,
             walletAddress: await ethersSigner.getAddress(),
