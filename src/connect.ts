@@ -39,6 +39,7 @@ export const connectToLit = async () => {
         }) => {
           const toSign = await createSiweMessage({
             domain: "https://testing-kappa-gray-46.vercel.app/",
+            statement: "This is a test statement different from the original!",
             uri,
             expiration,
             resources: resourceAbilityRequests,
