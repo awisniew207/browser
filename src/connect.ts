@@ -1,10 +1,10 @@
 import { LitNodeClient } from '@lit-protocol/lit-node-client';
 import {
-  LitAbility,
   LitAccessControlConditionResource,
   createSiweMessage,
   generateAuthSig,
 } from "@lit-protocol/auth-helpers";
+import { LIT_ABILITY, LIT_NETWORK } from "@lit-protocol/constants";
 import * as ethers from "ethers";
 
 export const connectToLit = async () => {
@@ -15,7 +15,7 @@ export const connectToLit = async () => {
       }
 
       const litNodeClient = new LitNodeClient({
-        litNetwork: 'datil-dev',
+        litNetwork: LIT_NETWORK.DatilDev,
         debug: false
       });
 
@@ -34,7 +34,7 @@ export const connectToLit = async () => {
         resourceAbilityRequests: [
           {
             resource: new LitAccessControlConditionResource("*"),
-            ability: LitAbility.AccessControlConditionDecryption,
+            ability: LIT_ABILITY.AccessControlConditionDecryption,
           },
         ],
         authNeededCallback: async ({
