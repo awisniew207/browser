@@ -9,11 +9,7 @@ import * as ethers from "ethers";
 
 export const connectToLit = async () => {
     try {
-      // Check if we're in a browser environment
-      if (typeof window === 'undefined' || !window.ethereum) {
-        throw new Error('Please install a Web3 wallet like MetaMask');
-      }
-
+      // More information about the available Lit Networks: https://developer.litprotocol.com/category/networks
       const litNodeClient = new LitNodeClient({
         litNetwork: LIT_NETWORK.DatilDev,
         debug: false
@@ -27,7 +23,6 @@ export const connectToLit = async () => {
       const ethersSigner = provider.getSigner();
       console.log("Connected account:", await ethersSigner.getAddress());
       
-      console.log("Getting session signatures...");
       const sessionSignatures = await litNodeClient.getSessionSigs({
         chain: "ethereum",
         expiration: new Date(Date.now() + 1000 * 60 * 15).toISOString(), // 15 minutes
@@ -42,13 +37,8 @@ export const connectToLit = async () => {
           expiration,
           resourceAbilityRequests,
         }) => {
-          const domain = typeof window !== 'undefined' 
-            ? window.location.origin 
-            : 'https://testing-kappa-gray-46.vercel.app';
-
           const toSign = await createSiweMessage({
-            domain,
-            statement: "This is a test statement different from the original!",
+            domain: "localhost:5173",
             uri,
             expiration,
             resources: resourceAbilityRequests,
@@ -64,9 +54,7 @@ export const connectToLit = async () => {
         },
       });
       console.log("Session signatures:", sessionSignatures);
-      return { litNodeClient, sessionSignatures };
     } catch (error) {
       console.error('Failed to connect to Lit Network:', error);
-      throw error;
     }
   };
