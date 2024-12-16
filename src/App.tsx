@@ -1,16 +1,11 @@
-import { connectToLit } from "./connect";
+import { LitConnector } from './components/LitConnector';
 
 function App() {
-
   return (
     <>
       <div className="card">
-      <hr />
-        <h3>Simple LitNodeClient Connection</h3>
-        <button onClick={async () => await connectToLit()}>
-        Connect
-        </button>
-        <h5> Check the browser console! </h5>
+        <hr />
+        <LitConnector />
         <hr />
       </div>
     </>

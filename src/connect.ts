@@ -9,7 +9,11 @@ import * as ethers from "ethers";
 
 export const connectToLit = async () => {
     try {
-      // More information about the available Lit Networks: https://developer.litprotocol.com/category/networks
+      // Check if we're in a browser environment
+      if (typeof window === 'undefined' || !window.ethereum) {
+        throw new Error('Please install a Web3 wallet like MetaMask');
+      }
+
       const litNodeClient = new LitNodeClient({
         litNetwork: 'datil-dev',
         debug: false
@@ -38,8 +42,12 @@ export const connectToLit = async () => {
           expiration,
           resourceAbilityRequests,
         }) => {
+          const domain = typeof window !== 'undefined' 
+            ? window.location.origin 
+            : 'https://testing-kappa-gray-46.vercel.app';
+
           const toSign = await createSiweMessage({
-            domain: "https://testing-kappa-gray-46.vercel.app",
+            domain,
             statement: "This is a test statement different from the original!",
             uri,
             expiration,
@@ -56,7 +64,9 @@ export const connectToLit = async () => {
         },
       });
       console.log("Session signatures:", sessionSignatures);
+      return { litNodeClient, sessionSignatures };
     } catch (error) {
       console.error('Failed to connect to Lit Network:', error);
+      throw error;
     }
   };

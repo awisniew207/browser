@@ -1,0 +1,21 @@
+.lit-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lit-connector button {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.lit-connector button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.lit-connector .error {
+  color: #ff4444;
+  margin: 0.5rem 0;
+} 
