@@ -23,9 +23,10 @@ export const connectToLit = async () => {
       const ethersSigner = provider.getSigner();
       console.log("Connected account:", await ethersSigner.getAddress());
       
+      console.log("Getting session signatures...");
       const sessionSignatures = await litNodeClient.getSessionSigs({
         chain: "ethereum",
-        expiration: new Date(Date.now() + 1000 * 60 * 10 ).toISOString(), // 10 minutes
+        expiration: new Date(Date.now() + 1000 * 60 * 15).toISOString(), // 15 minutes
         resourceAbilityRequests: [
           {
             resource: new LitAccessControlConditionResource("*"),
@@ -38,7 +39,7 @@ export const connectToLit = async () => {
           resourceAbilityRequests,
         }) => {
           const toSign = await createSiweMessage({
-            domain: "https://testing-kappa-gray-46.vercel.app/",
+            domain: "https://testing-kappa-gray-46.vercel.app",
             statement: "This is a test statement different from the original!",
             uri,
             expiration,
