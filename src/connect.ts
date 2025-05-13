@@ -38,7 +38,7 @@ export const connectToLit = async () => {
           resourceAbilityRequests,
         }) => {
           const toSign = await createSiweMessage({
-            domain: "https://browser-theta-ashen.vercel.app/",
+            domain: "browser-theta-ashen.vercel.app",
             statement: "Custom message.",
             uri,
             expiration,
